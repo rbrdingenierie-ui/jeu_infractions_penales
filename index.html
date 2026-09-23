@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le tribunal de Thémis — Contravention, délit ou crime ?</title>
+<style>
+  :root{
+    --bg:#F3EEDC; --ink:#211E1B; --grey:#6B675F;
+    --contra:#4E7590; --contra-dark:#385A72; --contra-soft:#E7EEF2;
+    --delit:#A85A28; --delit-dark:#9A5528; --delit-soft:#F7E9DD;
+    --crime:#7A1F2B; --crime-dark:#5A1520; --crime-soft:#F2E1E3;
+    --gold:#B8935A; --parchment:#F3EEE2;
+    --a11y-scale:1;
+  }
+  *{box-sizing:border-box;}
+  button:focus-visible, a:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+  html{font-size:calc(16px * var(--a11y-scale));}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Public Sans','Segoe UI',sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,.slab{ font-family:'Roboto Slab','Georgia',serif; }
+  .skip-link{ position:absolute; left:-999px; top:0; background:var(--ink); color:#fff; padding:10px 16px; z-index:999; }
+  .skip-link:focus{ left:0; }
+
+  /* ===== Accessibilité ===== */
+  .a11y-bar{
+    position:static; z-index:500; background:#fff; border-bottom:2px solid var(--ink);
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 16px;
+  }
+  .a11y-bar span.lbl{ font-size:.78rem; font-weight:700; margin-right:2px; }
+  .a11y-btn{
+    font-family:inherit; font-size:.78rem; font-weight:600; background:var(--parchment);
+    border:2px solid #D8D0BC; border-radius:999px; padding:6px 13px; cursor:pointer; color:var(--ink);
+  }
+  .a11y-btn[aria-pressed="true"]{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .a11y-size{ display:flex; gap:4px; margin-left:auto; align-items:center; }
+  .a11y-size button{
+    width:30px; height:30px; border-radius:7px; border:2px solid #D8D0BC; background:var(--parchment);
+    font-weight:800; cursor:pointer;
+  }
+  body.a11y-contrast{ --bg:#fff; --grey:#000; }
+  body.a11y-contrast .a11y-bar{ border-bottom-width:3px; }
+  body.a11y-contrast .cas-carte, body.a11y-contrast .verdict-carte{ border-width:3px !important; }
+  body.a11y-font, body.a11y-font *{ font-family:'Verdana',sans-serif !important; }
+  body.falc-mode .falc-hide{ display:none; }
+  .falc-only{ display:none; }
+  body.falc-mode .falc-only{ display:block; }
+  body.anim-off *{ animation:none !important; transition:none !important; }
+  @media (prefers-reduced-motion: reduce) { *{ animation:none !important; transition:none !important; } }
+
+  /* ===== Écran d'accueil Thémis ===== */
+  .accueil{
+    min-height:calc(100vh - 54px); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:30px 20px; text-align:center;
+  }
+  .accueil h1{ font-size:clamp(1.6rem,4vw,2.4rem); color:var(--crime-dark); margin:18px 0 8px; }
+  .accueil p{ max-width:560px; color:var(--grey); font-size:1.05rem; }
+  .accueil-cta{
+    margin-top:22px; background:var(--crime); color:#fff; border:none; padding:15px 36px;
+    border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer; font-family:inherit;
+    box-shadow:0 6px 0 var(--crime-dark);
+  }
+  .accueil-cta:active{ transform:translateY(4px); box-shadow:0 2px 0 var(--crime-dark); }
+
+  .lien-savoir{
+    display:block; margin:18px auto 0; background:none; border:none; color:var(--delit-dark);
+    font-family:inherit; font-size:.95rem; font-weight:700; text-decoration:underline; cursor:pointer;
+  }
+  .lien-savoir:hover{ color:var(--crime-dark); }
+
+  .modal-overlay{
+    display:none; position:fixed; inset:0; z-index:900; background:rgba(33,30,27,.55);
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay.ouvert{ display:flex; }
+  .modal-boite{
+    background:#fff; border-radius:18px; max-width:620px; width:100%; max-height:86vh; overflow-y:auto;
+    padding:32px 34px 28px; position:relative; box-shadow:0 20px 50px -12px rgba(0,0,0,.4);
+  }
+  .modal-boite h2{ color:var(--crime-dark); font-size:1.5rem; margin:0 0 18px; }
+  .modal-fermer{
+    position:absolute; top:16px; right:16px; background:var(--parchment); border:2px solid #D8D0BC;
+    border-radius:50%; width:34px; height:34px; font-size:1rem; cursor:pointer; color:var(--ink);
+  }
+  .savoir-bloc{ margin-bottom:20px; }
+  .savoir-bloc h2{ font-family:'Roboto Slab',serif; color:var(--delit-dark); font-size:1.08rem; margin:0 0 6px; }
+  .savoir-bloc p{ margin:0; line-height:1.6; color:var(--ink); font-size:.98rem; }
+  .savoir-bloc b{ color:var(--crime-dark); }
+
+  .savoir-grille{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:8px; }
+  .savoir-fiche{
+    background:#fff; border:2px solid #E4DFD0; border-radius:14px; padding:16px 18px;
+    box-shadow:0 6px 16px -10px rgba(30,25,15,.25); position:relative;
+  }
+  .savoir-fiche .sv-ic{ font-size:1.7rem; display:block; margin-bottom:6px; }
+  .savoir-fiche h3{ font-family:'Roboto Slab',serif; color:var(--delit-dark); font-size:.98rem; margin:0 0 6px; }
+  .savoir-fiche p{ margin:0; line-height:1.48; color:var(--ink); font-size:.84rem; }
+  .savoir-fiche b{ color:var(--crime-dark); }
+  .sv-mythe{
+    position:absolute; top:12px; right:12px; background:var(--crime); color:#fff; font-size:.66rem;
+    font-weight:800; padding:3px 9px; border-radius:99px; letter-spacing:.3px; transform:rotate(4deg);
+  }
+  .savoir-fiche.sv-glaive{ border-color:var(--gold); background:linear-gradient(150deg,#fff 60%,#FBF4E4 100%); }
+  .savoir-fiche.sv-marteau{ border-color:var(--crime); }
+  @media (max-width:640px){ .savoir-grille{ grid-template-columns:1fr; } }
+
+  .retenir-intro{
+    background:var(--parchment); border:2px solid #E4DFD0; border-radius:14px; padding:16px 20px;
+    text-align:center; font-size:1rem; line-height:1.5; margin-bottom:20px;
+  }
+  .retenir-intro b{ color:var(--ink); }
+  .retenir-grille{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .retenir-fiche{
+    border-radius:14px; padding:18px 16px; color:#fff; box-shadow:0 6px 16px -8px rgba(0,0,0,.3);
+  }
+  .retenir-fiche.f-contra{ background:var(--contra); }
+  .retenir-fiche.f-delit{ background:var(--delit); }
+  .retenir-fiche.f-crime{ background:var(--crime); }
+  .retenir-ic{ font-size:1.9rem; display:block; text-align:center; margin-bottom:6px; }
+  .retenir-fiche h3{ font-family:'Roboto Slab',serif; text-align:center; font-size:1.05rem; margin:0 0 10px; letter-spacing:.3px; }
+  .retenir-fiche p{ font-size:.86rem; line-height:1.45; margin:0 0 10px; }
+  .retenir-fait{ display:flex; gap:6px; font-size:.78rem; margin-top:6px; align-items:baseline; }
+  .retenir-fait b{ font-weight:800; }
+  .retenir-fiche hr{ border:none; border-top:1px solid rgba(255,255,255,.35); margin:10px 0; }
+  @media (max-width:640px){ .retenir-grille{ grid-template-columns:1fr; } }
+  #modalSavoir .accueil-cta{ margin-top:6px; padding:12px 30px; font-size:.95rem; box-shadow:0 4px 0 var(--crime-dark); }
+
+  /* ===== Jeu ===== */
+  #jeuEcran{ display:none; max-width:980px; margin:0 auto; padding:12px 20px 16px; }
+  .entete-cas{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+  .entete-cas .slab{ font-size:1.25rem; color:var(--ink); }
+  .compteur{ font-size:.85rem; color:var(--grey); font-weight:600; }
+  .jauge{ height:6px; background:#E4DFD0; border-radius:99px; overflow:hidden; margin-bottom:12px; }
+  .jauge-remplie{ height:100%; background:linear-gradient(90deg,var(--contra),var(--delit),var(--crime)); transition:width .4s ease; }
+
+  .cas-carte{
+    background:#fff; border:2px solid #E4DFD0; border-radius:16px; padding:18px 24px;
+    box-shadow:0 8px 20px -10px rgba(30,25,15,.18); position:relative; overflow:hidden;
+  }
+  .cas-carte::before{
+    content:"⚖️"; position:absolute; top:4px; right:6px; font-size:3.4rem;
+    line-height:1; pointer-events:none; opacity:0.26; filter:grayscale(1);
+  }
+  .cas-texte{ font-size:1.08rem; line-height:1.4; position:relative; z-index:1; max-width:70ch; }
+  .cas-texte b{ color:var(--crime-dark); }
+
+  .options{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+  .opt-btn{
+    font-family:inherit; font-size:1rem; font-weight:800; padding:12px 8px; border-radius:12px;
+    cursor:pointer; color:#fff; border:none; display:flex; flex-direction:column; align-items:center; gap:5px;
+    box-shadow:0 4px 0 rgba(0,0,0,.2); transition:transform .1s ease;
+  }
+  .opt-btn:hover{ filter:brightness(1.08); }
+  .opt-btn:active{ transform:translateY(4px); box-shadow:0 1px 0 rgba(0,0,0,.2); }
+  .opt-btn .ic{ font-size:1.35rem; }
+  .opt-contra{ background:var(--contra); }
+  .opt-delit{ background:var(--delit); }
+  .opt-crime{ background:var(--crime); }
+  .opt-btn[disabled]{ opacity:.4; cursor:default; }
+  .opt-btn.correct-choice{ outline:4px solid #2E8B57; outline-offset:2px; }
+  .opt-btn.faux-choice{ outline:4px solid #B23A3A; outline-offset:2px; opacity:.6; }
+
+  /* ===== Verdict (tampon) ===== */
+  .verdict-zone{ margin-top:12px; display:none; }
+  .verdict-carte{
+    border:3px solid var(--cat-color, var(--crime)); border-radius:14px; background:var(--cat-soft, var(--crime-soft));
+    padding:14px 18px; position:relative;
+  }
+  .tampon{
+    display:inline-flex; align-items:center; gap:8px; border:3px solid var(--cat-color,var(--crime));
+    color:var(--cat-color,var(--crime)); border-radius:9px; padding:5px 14px; font-family:'Roboto Slab',serif;
+    font-weight:800; font-size:1.15rem; letter-spacing:.5px; transform:rotate(-3deg);
+    animation:tampon-pose .35s ease-out;
+  }
+  @keyframes tampon-pose{ 0%{ transform:rotate(-3deg) scale(1.6); opacity:0; } 100%{ transform:rotate(-3deg) scale(1); opacity:1; } }
+  .verdict-detail{ margin-top:9px; font-size:.9rem; line-height:1.42; }
+  .verdict-detail .ligne{ margin:4px 0; }
+  .verdict-detail b{ color:var(--ink); }
+  .verdict-explication{ margin-top:8px; padding-top:8px; border-top:1px dashed rgba(0,0,0,.15); color:var(--ink); font-size:.84rem; }
+
+  .nav-bas{ display:flex; justify-content:space-between; align-items:center; margin-top:14px; }
+  .btn-suivant{
+    font-family:inherit; background:var(--ink); color:#fff; border:none; padding:14px 30px; border-radius:10px;
+    font-size:1.05rem; font-weight:700; cursor:pointer; display:none;
+  }
+  .lien-quitter{ color:var(--grey); font-size:.9rem; text-decoration:underline; background:none; border:none; cursor:pointer; font-family:inherit; }
+
+  /* ===== Écran final ===== */
+  .final-ecran{ display:none; text-align:center; padding:60px 20px; margin:0 auto; }
+  .final-ecran h2{ font-size:2rem; color:var(--crime-dark); }
+  .final-score{ font-size:3.4rem; font-weight:800; color:var(--gold); margin:16px 0; }
+
+  @media (max-width:720px){
+    .options{ grid-template-columns:1fr; }
+    .cas-carte{ padding:26px 22px; }
+    .cas-texte{ font-size:1.12rem; }
+  }
+</style>
+</head>
+<body>
+
+<a href="#jeuEcran" class="skip-link">Aller au jeu</a>
+
+<div class="a11y-bar" role="toolbar" aria-label="Accessibilité">
+  <span class="lbl">♿ Accessibilité</span>
+  <button class="a11y-btn" id="btnFont" aria-pressed="false">🔤 Police adaptée</button>
+  <button class="a11y-btn" id="btnContrast" aria-pressed="false">◐ Contraste renforcé</button>
+  <button class="a11y-btn" id="btnFalc" aria-pressed="false">📖 Mode FALC</button>
+  <button class="a11y-btn" id="btnHover" aria-pressed="false">🔊 Lecture au survol</button>
+  <button class="a11y-btn" id="btnAnim" aria-pressed="false">🎬 Alléger les animations</button>
+  <div class="a11y-size">
+    <span style="font-size:.78rem; font-weight:700;">Taille</span>
+    <button id="fsMinus">A−</button><button id="fsReset">A</button><button id="fsPlus">A+</button>
+  </div>
+</div>
+
+<!-- ===== ACCUEIL ===== -->
+<div class="accueil" id="accueil">
+  <svg id="themisAccueilSvg" width="170" height="210" viewBox="0 0 170 210" role="img" aria-label="Thémis, la mascotte du tribunal"></svg>
+  <h1 class="slab">Le tribunal de Thémis</h1>
+  <p data-hover>Vingt affaires vont être jugées. À chaque fois : lisez les faits, votez en classe — contravention, délit ou crime ? — puis découvrez le verdict et la peine réellement encourue.</p>
+  <button class="accueil-cta" id="btnCommencer">Commencer l'audience</button>
+</div>
+
+<!-- ===== JEU ===== -->
+<div id="jeuEcran">
+  <div class="entete-cas">
+    <h1 class="slab" id="numCas" style="margin:0;">Affaire n°1</h1>
+    <span class="compteur" id="compteur">1 / 12</span>
+  </div>
+  <div class="jauge"><div class="jauge-remplie" id="jaugeRemplie" style="width:8%;"></div></div>
+
+  <div class="cas-carte">
+    <p class="cas-texte" id="casTexte"></p>
+
+    <div class="options" id="optionsZone">
+      <button class="opt-btn opt-contra" data-cat="contravention"><span class="ic">📝</span>Contravention</button>
+      <button class="opt-btn opt-delit" data-cat="delit"><span class="ic">🚨</span>Délit</button>
+      <button class="opt-btn opt-crime" data-cat="crime"><span class="ic">⛓️</span>Crime</button>
+    </div>
+
+    <div class="verdict-zone" id="verdictZone">
+      <div class="verdict-carte" id="verdictCarte">
+        <div class="tampon" id="tampon"></div>
+        <div class="verdict-detail">
+          <div class="ligne">🏛️ <b>Juridiction compétente :</b> <span id="verdictJuridiction"></span></div>
+          <div class="ligne">⚖️ <b>Peine encourue :</b> <span id="verdictPeine"></span></div>
+          <div class="verdict-explication" id="verdictExplication"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-bas">
+    <button class="lien-quitter" id="btnQuitter">← Revenir à l'accueil</button>
+    <button class="btn-suivant" id="btnSuivant">Affaire suivante →</button>
+  </div>
+</div>
+
+<!-- ===== LE SAVEZ-VOUS (écran de fin de parcours) ===== -->
+<!-- ===== FINAL ===== -->
+<div class="final-ecran" id="finalEcran" style="max-width:680px;">
+  <svg id="themisFinalSvg" width="140" height="170" viewBox="0 0 170 210" role="img" aria-label="Thémis"></svg>
+  <h1 class="slab">L'audience est levée</h1>
+  <p>Vingt affaires jugées par la classe.</p>
+  <div class="final-score" id="scoreFinal">0 / 12</div>
+  <p style="color:var(--grey);">bonnes qualifications trouvées du premier coup</p>
+
+  <h2 class="slab" style="text-align:center; color:var(--crime-dark); font-size:1.4rem; margin:36px 0 22px; padding-top:26px; border-top:1px solid #E4DFD0;">💡 Le savez-vous ?</h2>
+
+  <div class="savoir-grille">
+    <div class="savoir-fiche">
+      <span class="sv-ic">🏛️</span>
+      <h3>Qui est Thémis ?</h3>
+      <p>Déesse grecque, fille d'Ouranos (le Ciel) et de Gaïa (la Terre), deuxième épouse et conseillère de Zeus. Son équivalent romain, <b>Justitia</b>, a donné son nom à notre mot « justice ». Représentée les yeux bandés : elle ne regarde pas qui se tient devant elle, seulement les faits.</p>
+    </div>
+
+    <div class="savoir-fiche">
+      <span class="sv-ic">⚖️</span>
+      <h3>Pourquoi une balance ?</h3>
+      <p>Le symbole <b>le plus ancien</b> de la justice. Elle pèse les arguments de l'accusation et de la défense. Parfaitement équilibrée, elle symbolise l'impartialité : la justice ne doit pencher pour aucune des parties.</p>
+    </div>
+
+    <div class="savoir-fiche sv-glaive">
+      <span class="sv-ic">⚔️</span>
+      <h3>Et son autre main ?</h3>
+      <p>Traditionnellement, ce n'est pas un marteau : c'est un <b>glaive</b>. D'après Vie publique, il rappelle que « la justice n'est rien sans la force qui permet de la faire appliquer » — juger, c'est aussi trancher et faire respecter la décision.</p>
+    </div>
+
+    <div class="savoir-fiche sv-marteau">
+      <span class="sv-mythe">mythe 🎬</span>
+      <span class="sv-ic">🔨</span>
+      <h3>Le marteau, alors ?</h3>
+      <p>Clin d'œil assumé : ce symbole vient des <b>tribunaux américains</b>, popularisé par le cinéma. D'après le ministère de la Justice, <b>les magistrats français n'en utilisent quasiment jamais</b> — une confusion entretenue par certaines séries.</p>
+    </div>
+  </div>
+
+  <h2 class="slab" style="text-align:center; color:var(--crime-dark); font-size:1.4rem; margin:36px 0 18px; padding-top:26px; border-top:1px solid #E4DFD0;">📌 À retenir</h2>
+
+  <div class="retenir-intro">Une <b>infraction</b> est un comportement interdit par la loi et puni par une sanction pénale. Le Code pénal en distingue trois catégories (art. 111-1), classées ici par gravité croissante.</div>
+
+  <div class="retenir-grille">
+    <div class="retenir-fiche f-contra">
+      <span class="retenir-ic">📝</span>
+      <h3>Contravention</h3>
+      <p>L'infraction la <b>moins grave</b>. Elle ne peut jamais être punie de prison : uniquement une amende, répartie en 5 classes.</p>
+      <hr>
+      <div class="retenir-fait">⚖️ <span><b>Peine :</b> amende (38 € à 1 500 €)</span></div>
+      <div class="retenir-fait">🏛️ <span><b>Juge :</b> tribunal de police</span></div>
+    </div>
+    <div class="retenir-fiche f-delit">
+      <span class="retenir-ic">🚨</span>
+      <h3>Délit</h3>
+      <p>Une infraction de gravité <b>intermédiaire</b>. Elle peut combiner emprisonnement et amende.</p>
+      <hr>
+      <div class="retenir-fait">⚖️ <span><b>Peine :</b> jusqu'à 10 ans de prison + amende</span></div>
+      <div class="retenir-fait">🏛️ <span><b>Juge :</b> tribunal correctionnel</span></div>
+    </div>
+    <div class="retenir-fiche f-crime">
+      <span class="retenir-ic">⛓️</span>
+      <h3>Crime</h3>
+      <p>L'infraction la <b>plus grave</b>. Elle est punie de réclusion criminelle, la seule peine pouvant aller jusqu'à la perpétuité.</p>
+      <hr>
+      <div class="retenir-fait">⚖️ <span><b>Peine :</b> 15 ans à la perpétuité</span></div>
+      <div class="retenir-fait">🏛️ <span><b>Juge :</b> cour d'assises</span></div>
+    </div>
+  </div>
+
+  <button class="accueil-cta" onclick="location.reload()" style="margin-top:26px;">Rejuger une nouvelle session</button>
+</div>
+
+<footer style="text-align:center; padding:20px 20px 28px; font-size:.8rem; color:var(--grey);">Benjamin RICHARD — Tous droits réservés</footer>
+
+<script>
+// ==========================================================
+// SVG THÉMIS — même niveau de détail que la mascotte Ludo
+// ==========================================================
+function themisSVG(p){
+  return `
+  <defs>
+  <linearGradient id="${p}-robeFace" x1="10%" y1="0%" x2="95%" y2="30%">
+    <stop offset="0%" stop-color="#9C3444"/>
+    <stop offset="30%" stop-color="#7F2230"/>
+    <stop offset="65%" stop-color="#601925"/>
+    <stop offset="100%" stop-color="#3E0F17"/>
+  </linearGradient>
+  <linearGradient id="${p}-mancheG" x1="0%" y1="0%" x2="100%" y2="60%">
+    <stop offset="0%" stop-color="#8A2A38"/>
+    <stop offset="55%" stop-color="#6B1D28"/>
+    <stop offset="100%" stop-color="#4A121A"/>
+  </linearGradient>
+  <linearGradient id="${p}-mancheD" x1="100%" y1="0%" x2="0%" y2="60%">
+    <stop offset="0%" stop-color="#6B1D28"/>
+    <stop offset="60%" stop-color="#54161F"/>
+    <stop offset="100%" stop-color="#380D13"/>
+  </linearGradient>
+  <linearGradient id="${p}-robeFlanc" x1="0%" y1="0%" x2="100%" y2="10%">
+    <stop offset="0%" stop-color="#5E1620"/>
+    <stop offset="50%" stop-color="#440F17"/>
+    <stop offset="100%" stop-color="#26070C"/>
+  </linearGradient>
+  <linearGradient id="${p}-colFace" x1="0%" y1="0%" x2="100%" y2="20%">
+    <stop offset="0%" stop-color="#F8F2E2"/>
+    <stop offset="60%" stop-color="#E8DCC0"/>
+    <stop offset="100%" stop-color="#CBB98F"/>
+  </linearGradient>
+  <linearGradient id="${p}-peauCou" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#EFC6A4"/>
+    <stop offset="100%" stop-color="#D2A47D"/>
+  </linearGradient>
+  <radialGradient id="${p}-peauVisage" cx="33%" cy="24%" r="85%">
+    <stop offset="0%" stop-color="#FBE4CB"/>
+    <stop offset="50%" stop-color="#EEC6A0"/>
+    <stop offset="82%" stop-color="#D9A87C"/>
+    <stop offset="100%" stop-color="#BE8B60"/>
+  </radialGradient>
+  <linearGradient id="${p}-orBalance" x1="10%" y1="0%" x2="90%" y2="100%">
+    <stop offset="0%" stop-color="#FBE7AE"/>
+    <stop offset="35%" stop-color="#E0B255"/>
+    <stop offset="100%" stop-color="#8F6A22"/>
+  </linearGradient>
+  <linearGradient id="${p}-jauneBalance" x1="10%" y1="0%" x2="90%" y2="100%">
+    <stop offset="0%" stop-color="#FFFDE0"/>
+    <stop offset="35%" stop-color="#FFEE00"/>
+    <stop offset="100%" stop-color="#E8C400"/>
+  </linearGradient>
+  <linearGradient id="${p}-cheveuxFond" x1="0%" y1="0%" x2="40%" y2="100%">
+    <stop offset="0%" stop-color="#5A3B24"/>
+    <stop offset="100%" stop-color="#2C1B10"/>
+  </linearGradient>
+  <linearGradient id="${p}-cheveuxMeche" x1="0%" y1="0%" x2="100%" y2="60%">
+    <stop offset="0%" stop-color="#8A5F3A"/>
+    <stop offset="100%" stop-color="#4E3220"/>
+  </linearGradient>
+  <linearGradient id="${p}-socleGrad" x1="0%" y1="0%" x2="100%" y2="8%">
+    <stop offset="0%" stop-color="#4A2E1C"/>
+    <stop offset="100%" stop-color="#1E0F08"/>
+  </linearGradient>
+  <radialGradient id="${p}-ombreThemis" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#2E080D" stop-opacity="0.42"/>
+    <stop offset="70%" stop-color="#2E080D" stop-opacity="0.12"/>
+    <stop offset="100%" stop-color="#2E080D" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="${p}-grainRobe" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="3" seed="7" result="n"/>
+    <feColorMatrix in="n" type="saturate" values="0" result="ng"/>
+    <feComponentTransfer in="ng" result="nd"><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    <feComposite in="nd" in2="SourceGraphic" operator="in" result="m"/>
+    <feBlend in="SourceGraphic" in2="m" mode="multiply"/>
+  </filter>
+  </defs>
+  <ellipse cx="85" cy="204" rx="52" ry="8" fill="url(#${p}-ombreThemis)"/>
+
+  <!-- MANCHE DROITE (pleine, derriere le corps), tenant un petit maillet -->
+  <path id="${p}-mancheDroite" d="M100 74 Q122 80 128 112 Q132 130 126 148 Q118 154 110 148 Q114 130 110 112 Q108 94 96 84 Z"
+        fill="url(#${p}-mancheD)" stroke="#1A0508" stroke-width="1.8"/>
+  <path d="M108 96 Q120 104 124 122" stroke="#3E0F17" stroke-width="1" opacity="0.5" fill="none"/>
+  <circle cx="122" cy="152" r="8" fill="url(#${p}-peauVisage)" stroke="#B7895F" stroke-width="1.3"/>
+
+  <g transform="translate(122,152)">
+    <g id="${p}-brasD" transform="rotate(20)">
+      <rect x="-2.2" y="-3" width="4.4" height="21" rx="2.2" fill="#8A5A32" stroke="#4A2E18" stroke-width="0.9"/>
+      <rect x="-9" y="-15" width="18" height="12" rx="3.5" fill="#B27E45" stroke="#4A2E18" stroke-width="1"/>
+      <rect x="-7" y="-13" width="7" height="3.4" rx="1.5" fill="#D8A968" opacity="0.7"/>
+      <!-- eclats d'impact, solidaires du marteau, invisibles au repos -->
+      <g id="${p}-impact" opacity="0">
+        <path d="M0 -9 L0 -20" stroke="#FFE066" stroke-width="2" stroke-linecap="round"/>
+        <path d="M-9 -9 L-19 -11" stroke="#FFE066" stroke-width="2" stroke-linecap="round"/>
+        <path d="M9 -9 L19 -11" stroke="#FFE066" stroke-width="2" stroke-linecap="round"/>
+        <path d="M-7 -2 L-15 2" stroke="#FFE066" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M7 -2 L15 2" stroke="#FFE066" stroke-width="1.6" stroke-linecap="round"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- MANCHE GAUCHE (pleine, derriere le corps), tenant la balance -->
+  <path id="${p}-mancheGauche" d="M66 78 Q48 84 40 108 Q34 128 36 146 Q44 152 52 146 Q48 128 52 110 Q54 92 70 84 Z"
+        fill="url(#${p}-mancheG)" stroke="#1A0508" stroke-width="1.8"/>
+  <path d="M56 100 Q42 112 38 130" stroke="#F0AEB8" stroke-width="1" opacity="0.28" fill="none"/>
+  <circle cx="38" cy="150" r="8.4" fill="url(#${p}-peauVisage)" stroke="#B7895F" stroke-width="1.3"/>
+  <path d="M31 147 Q38 142 45 147 Q46 152 45 156 Q38 160 31 156 Q30 152 31 147 Z" fill="url(#${p}-peauVisage)" stroke="#B0834F" stroke-width="1"/>
+  <path d="M33 148 Q38 145 43 148 M33 153 Q38 156 43 153" stroke="#B0834F" stroke-width="0.8" opacity="0.55" fill="none"/>
+
+  <!-- CORPS / ROBE avec epaules marquees et taille en A -->
+  <path d="M58 68 Q83 55 108 68 Q120 75 118 90 L114 190 Q113 200 104 202 L62 202 Q53 200 52 190 L48 90 Q46 75 58 68 Z"
+        fill="url(#${p}-robeFace)" filter="url(#${p}-grainRobe)" stroke="#1A0508" stroke-width="2.2"/>
+  <!-- lumiere haut-gauche -->
+  <path d="M58 68 Q49 77 48 90 L52 150 Q55 94 67 78 Q62 72 58 68 Z" fill="#C98A96" opacity="0.22"/>
+  <!-- ombre bas-droite -->
+  <path d="M108 68 Q119 77 118 90 L114 188 Q107 130 101 94 Q104 79 108 68 Z" fill="#26070C" opacity="0.3"/>
+  <!-- plis -->
+  <path d="M67 104 Q63 152 68 198" stroke="#3A0E15" stroke-width="1.3" opacity="0.4" fill="none"/>
+  <path d="M83 100 Q81 152 84 200" stroke="#3A0E15" stroke-width="1.2" opacity="0.32" fill="none"/>
+  <path d="M98 104 Q102 152 97 197" stroke="#3A0E15" stroke-width="1.3" opacity="0.38" fill="none"/>
+  <!-- ceinture -->
+  <path d="M51 130 L115 130 L115 140 L51 140 Z" fill="url(#${p}-orBalance)" stroke="#7A5A1E" stroke-width="1.2"/>
+  <path d="M51 132 L115 132" stroke="#FCECBB" stroke-width="1" opacity="0.55"/>
+  <circle cx="83" cy="135" r="6" fill="url(#${p}-orBalance)" stroke="#7A5A1E" stroke-width="1.1"/>
+  <circle cx="83" cy="135" r="2.2" fill="#7A5A1E"/>
+
+
+  <!-- cou -->
+  <path d="M73 55 L73 68 Q83 74 93 68 L93 55 Z" fill="url(#${p}-peauCou)"/>
+  <path d="M73 58 Q83 64 93 58" stroke="#B0834F" stroke-width="0.8" opacity="0.4" fill="none"/>
+
+  <!-- col : bande arrondie type rabat de magistrat -->
+  <path d="M65 58 Q83 76 101 58 Q104 68 101 76 Q83 90 65 76 Q62 68 65 58 Z"
+        fill="url(#${p}-colFace)" stroke="#B7A67C" stroke-width="1.4"/>
+  <path d="M74 68 L74 82 M92 68 L92 82" stroke="#C9B98E" stroke-width="1" opacity="0.7"/>
+
+  <!-- cheveux, arriere, avec volume -->
+  <path d="M48 44 Q42 10 83 6 Q124 10 118 44 Q121 60 110 66 Q116 32 83 26 Q50 32 56 66 Q45 60 48 44 Z"
+        fill="url(#${p}-cheveuxFond)"/>
+  <path d="M52 40 Q50 18 70 10 Q56 22 58 42 Z" fill="url(#${p}-cheveuxMeche)" opacity="0.85"/>
+  <path d="M114 40 Q116 18 96 10 Q110 22 108 42 Z" fill="url(#${p}-cheveuxMeche)" opacity="0.85"/>
+
+  <!-- tete -->
+  <g id="${p}-tete">
+    <ellipse cx="83" cy="38" rx="29" ry="27" fill="url(#${p}-peauVisage)" stroke="#B0834F" stroke-width="1.7"/>
+    <!-- machoire / ombre menton -->
+    <path d="M63 50 Q83 63 103 50 Q94 60 83 60 Q72 60 63 50 Z" fill="#C6976E" opacity="0.42"/>
+    <!-- ombre laterale (relief du visage) -->
+    <path d="M104 24 Q112 36 106 52 Q104 38 100 28 Z" fill="#BB8A5E" opacity="0.4"/>
+    <path d="M60 22 Q56 30 58 40 Q60 30 64 24 Z" fill="#FBEEDC" opacity="0.5"/>
+
+    <!-- meches devant -->
+    <path d="M52 36 Q48 24 59 17 Q54 28 56 38 Z" fill="url(#${p}-cheveuxMeche)"/>
+    <path d="M114 36 Q118 24 107 17 Q112 28 110 38 Z" fill="url(#${p}-cheveuxMeche)"/>
+
+    <!-- bandeau / diademe avec gemme -->
+    <path d="M53 27 Q83 9 113 27 L110 19 Q83 4 56 19 Z" fill="url(#${p}-orBalance)" stroke="#7A5A1E" stroke-width="1"/>
+    <path d="M57 21 Q83 11 109 21" stroke="#FCECBB" stroke-width="1" opacity="0.6" fill="none"/>
+    <circle cx="83" cy="13" r="4.6" fill="#8FCBD9" stroke="#7A5A1E" stroke-width="1"/>
+    <circle cx="81.6" cy="11.4" r="1.4" fill="#EAF8FA" opacity="0.9"/>
+
+    <!-- sourcils -->
+    <rect id="${p}-sourcilG" x="61" y="33" width="15" height="2.8" rx="1.4" fill="#43301C" opacity="0.9"/>
+    <rect id="${p}-sourcilD" x="90" y="33" width="15" height="2.8" rx="1.4" fill="#43301C" opacity="0.9"/>
+
+    <!-- yeux, regard mobile -->
+    <g id="${p}-oeilG">
+      <ellipse cx="69" cy="42" rx="6.8" ry="7.8" fill="#FFFFFF" stroke="#8A6444" stroke-width="1"/>
+      <g id="${p}-regardG">
+        <circle cx="69" cy="43" r="3.6" fill="#37271A"/>
+        <circle cx="70.8" cy="41" r="1.2" fill="#fff" opacity="0.92"/>
+      </g>
+    </g>
+    <g id="${p}-oeilD">
+      <ellipse cx="97" cy="42" rx="6.8" ry="7.8" fill="#FFFFFF" stroke="#8A6444" stroke-width="1"/>
+      <g id="${p}-regardD">
+        <circle cx="97" cy="43" r="3.6" fill="#37271A"/>
+        <circle cx="98.8" cy="41" r="1.2" fill="#fff" opacity="0.92"/>
+      </g>
+    </g>
+
+    <!-- nez, avec volume -->
+    <path d="M83 43 Q79 50 78 54 Q83 58 88 54 Q87 50 83 43 Z" fill="#DDA97E" opacity="0.55"/>
+    <path d="M80 53 Q83 55 86 53" stroke="#B0824F" stroke-width="0.9" opacity="0.5" fill="none"/>
+
+    <!-- bouche -->
+    <path id="${p}-bouche" d="M70 60 Q83 67 96 60" stroke="#7A4632" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M74 61.5 Q83 65.5 92 61.5" stroke="#C9776A" stroke-width="1.2" opacity="0.5" fill="none"/>
+
+    <!-- joues -->
+    <ellipse cx="60" cy="51" rx="4.6" ry="3" fill="#E8927A" opacity="0.36"/>
+    <ellipse cx="106" cy="51" rx="4.6" ry="3" fill="#E8927A" opacity="0.32"/>
+  </g>
+
+  <!-- BALANCE (main gauche), réduite de 25% autour du point de tenue -->
+  <g transform="translate(38,94) scale(0.75) translate(-38,-94)">
+  <g id="${p}-bras">
+    <line x1="38" y1="86" x2="38" y2="148" stroke="#8A6A1E" stroke-width="6.6" stroke-linecap="round"/>
+    <line x1="38" y1="86" x2="38" y2="148" stroke="url(#${p}-jauneBalance)" stroke-width="4.6" stroke-linecap="round"/>
+    <circle cx="38" cy="88" r="4.8" fill="url(#${p}-jauneBalance)" stroke="#B8900E" stroke-width="0.9"/>
+    <path d="M34 86 L38 78 L42 86 Z" fill="url(#${p}-jauneBalance)" stroke="#B8900E" stroke-width="0.7"/>
+
+    <line x1="16" y1="94" x2="60" y2="94" stroke="#8A6A1E" stroke-width="4.6" stroke-linecap="round"/>
+    <line x1="16" y1="94" x2="60" y2="94" stroke="url(#${p}-jauneBalance)" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="38" cy="94" r="4" fill="#8A6A1E"/>
+    <circle cx="38" cy="94" r="3" fill="#FFEE00"/>
+
+    <path d="M16 94 L10 112" stroke="#D9B33D" stroke-width="1.15"/>
+    <path d="M16 94 L20 112" stroke="#D9B33D" stroke-width="1.15"/>
+    <ellipse cx="15" cy="115" rx="11.5" ry="3.8" fill="url(#${p}-jauneBalance)" stroke="#B8900E" stroke-width="1.15"/>
+
+    <path d="M60 94 L54 112" stroke="#D9B33D" stroke-width="1.15"/>
+    <path d="M60 94 L64 112" stroke="#D9B33D" stroke-width="1.15"/>
+    <ellipse cx="59" cy="115" rx="11.5" ry="3.8" fill="url(#${p}-jauneBalance)" stroke="#B8900E" stroke-width="1.15"/>
+  </g>
+  </g>
+
+  <!-- legere separation au bas de la robe, suggerant les jambes -->
+  <path d="M83 172 L80 200 M83 172 L86 200" stroke="#26070C" stroke-width="1.4" opacity="0.45" fill="none"/>
+
+  <!-- pieds -->
+  <ellipse cx="71" cy="200" rx="10" ry="7" fill="#1D0E08" stroke="#0E0602" stroke-width="1.2"/>
+  <ellipse cx="95" cy="200" rx="10" ry="7" fill="#1D0E08" stroke="#0E0602" stroke-width="1.2"/>
+  <ellipse cx="67" cy="197" rx="3.6" ry="2" fill="#3A2415" opacity="0.7"/>
+  <ellipse cx="91" cy="197" rx="3.6" ry="2" fill="#3A2415" opacity="0.7"/>
+
+  <!-- ombre de contact -->
+  <path d="M54 202 L112 202 L108 206 Q83 212 58 206 Z" fill="url(#${p}-socleGrad)" opacity="0.55"/>
+  `;
+}
+
+document.getElementById('themisAccueilSvg').innerHTML = themisSVG('a');
+document.getElementById('themisFinalSvg').innerHTML = themisSVG('f');
+
+// ---- animation des yeux / regard / sourcils / bouche / bras (CSS-in-JS via style injecté) ----
+const styleAnim = document.createElement('style');
+styleAnim.textContent = `
+  #a-oeilG, #a-oeilD, #f-oeilG, #f-oeilD{ transform-box: fill-box; transform-origin:center; animation: themis-cligne 6.4s ease-in-out infinite; }
+  #a-oeilD, #f-oeilD{ animation-delay:.08s; }
+  @keyframes themis-cligne{ 0%,90%,100%{transform:scaleY(1);} 93%,96%{transform:scaleY(.1);} }
+  #a-regardG,#a-regardD,#f-regardG,#f-regardD{ transform-box:fill-box; transform-origin:center; animation: themis-regarde 7.6s ease-in-out infinite; }
+  @keyframes themis-regarde{
+    0%,8%{ transform:translate(0,0); }
+    16%,26%{ transform:translate(1.6px,0.6px); }
+    36%{ transform:translate(-1.4px,-0.8px); }
+    46%,56%{ transform:translate(-1.6px,0.5px); }
+    66%{ transform:translate(1.2px,-0.6px); }
+    80%,100%{ transform:translate(0,0); }
+  }
+  #a-sourcilG,#a-sourcilD,#f-sourcilG,#f-sourcilD{ transform-box:view-box; transform-origin:83px 34px; animation: themis-sourcil 8.5s ease-in-out infinite; }
+  @keyframes themis-sourcil{ 0%,44%,100%{transform:translateY(0);} 50%,60%{transform:translateY(-2px);} }
+  #a-bouche,#f-bouche{ transform-box:view-box; transform-origin:83px 62px; animation: themis-parle 7.2s ease-in-out infinite; }
+  @keyframes themis-parle{ 0%,60%,100%{transform:scale(1,1);} 66%{transform:scale(.94,1.3);} 72%{transform:scale(1,.85);} 78%{transform:scale(.96,1.2);} }
+  #a-bras,#f-bras{ transform-box:view-box; transform-origin:38px 94px; animation: themis-balance 3.6s ease-in-out infinite; }
+  @keyframes themis-balance{ 0%,100%{transform:rotate(0deg);} 50%{transform:rotate(2.5deg);} }
+  #a-brasD,#f-brasD{ transform-box:fill-box; transform-origin:center; animation: themis-brasD 6s ease-in-out infinite; }
+  @keyframes themis-brasD{
+    0%,55%{ transform:rotate(20deg); }
+    65%{ transform:rotate(-30deg); }
+    72%{ transform:rotate(55deg); }
+    78%{ transform:rotate(38deg); }
+    86%,100%{ transform:rotate(20deg); }
+  }
+  #a-impact,#f-impact{ animation: themis-impact 6s ease-in-out infinite; }
+  @keyframes themis-impact{
+    0%,70%{ opacity:0; }
+    72%{ opacity:1; }
+    80%,100%{ opacity:0; }
+  }
+  body.anim-off #a-oeilG, body.anim-off #a-oeilD, body.anim-off #f-oeilG, body.anim-off #f-oeilD,
+  body.anim-off #a-regardG, body.anim-off #a-regardD, body.anim-off #f-regardG, body.anim-off #f-regardD,
+  body.anim-off #a-sourcilG, body.anim-off #a-sourcilD, body.anim-off #f-sourcilG, body.anim-off #f-sourcilD,
+  body.anim-off #a-bouche, body.anim-off #f-bouche, body.anim-off #a-bras, body.anim-off #f-bras,
+  body.anim-off #a-brasD, body.anim-off #f-brasD, body.anim-off #a-impact, body.anim-off #f-impact{ animation:none !important; opacity:0; }
+`;
+document.head.appendChild(styleAnim);
+
+// ==========================================================
+// ACCESSIBILITÉ
+// ==========================================================
+function toggle(id, cls, cb){
+  const b = document.getElementById(id);
+  b.addEventListener('click', () => {
+    const on = document.body.classList.toggle(cls);
+    b.setAttribute('aria-pressed', on);
+    if (cb) cb(on);
+  });
+}
+toggle('btnContrast','a11y-contrast');
+toggle('btnFont','a11y-font');
+toggle('btnFalc','falc-mode');
+toggle('btnAnim','anim-off');
+let hoverOn = false;
+document.getElementById('btnHover').addEventListener('click', function(){
+  hoverOn = !hoverOn; this.setAttribute('aria-pressed', hoverOn);
+  if(!hoverOn && window.speechSynthesis) speechSynthesis.cancel();
+});
+document.querySelectorAll('[data-hover]').forEach(el=>{
+  el.addEventListener('mouseenter', ()=>{
+    if(!hoverOn || !window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(el.textContent.trim());
+    u.lang='fr-FR'; speechSynthesis.speak(u);
+  });
+});
+let fs = 1;
+function applyFs(){ document.documentElement.style.setProperty('--a11y-scale', fs); }
+document.getElementById('fsMinus').addEventListener('click', ()=>{ fs=Math.max(.85,fs-.1); applyFs(); });
+document.getElementById('fsPlus').addEventListener('click', ()=>{ fs=Math.min(1.4,fs+.1); applyFs(); });
+document.getElementById('fsReset').addEventListener('click', ()=>{ fs=1; applyFs(); });
+
+// ==========================================================
+// LES 12 AFFAIRES — sources : art. 111-1 et s. Code pénal, service-public.fr, justice.fr
+// ==========================================================
+const AFFAIRES = [
+  { texte:"Un automobiliste se gare sur une place réservée aux personnes handicapées, sans disposer de la carte nécessaire.",
+    cat:"contravention", juridiction:"Tribunal de police", peine:"Amende de 4ᵉ classe, jusqu'à 750 € (135 € en amende forfaitaire)",
+    explication:"C'est une contravention : la loi distingue 5 classes de contraventions, sanctionnées uniquement par une amende, jamais par de la prison." },
+  { texte:"Une personne laisse son chien faire ses besoins sur le trottoir sans les ramasser.",
+    cat:"contravention", juridiction:"Tribunal de police", peine:"Amende de 1ʳᵉ classe, jusqu'à 38 €",
+    explication:"C'est la contravention la plus légère qui existe : la 1ʳᵉ classe, plafonnée à 38 €." },
+  { texte:"Un conducteur roule à 148 km/h sur une autoroute limitée à 130 km/h.",
+    cat:"contravention", juridiction:"Tribunal de police", peine:"Amende de 4ᵉ classe, jusqu'à 750 €, + retrait de points",
+    explication:"Un dépassement de moins de 20 km/h reste une contravention (4ᵉ classe) — au-delà de 50 km/h, ce serait un délit." },
+  { texte:"Des voisins organisent une fête très bruyante après minuit malgré les plaintes du voisinage.",
+    cat:"contravention", juridiction:"Tribunal de police", peine:"Amende de 3ᵉ classe, jusqu'à 450 €",
+    explication:"Le tapage nocturne est une contravention de 3ᵉ classe." },
+  { texte:"Un automobiliste tient son téléphone en main pour parler en conduisant.",
+    cat:"contravention", juridiction:"Tribunal de police", peine:"Amende de 4ᵉ classe, jusqu'à 750 € (135 € en amende forfaitaire), + retrait de points",
+    explication:"Tenir son téléphone en main au volant reste une contravention, même si aucun accident n'est provoqué." },
+  { texte:"Un conducteur roule sans avoir attaché sa ceinture de sécurité.",
+    cat:"contravention", juridiction:"Tribunal de police", peine:"Amende de 4ᵉ classe, jusqu'à 750 € (135 € en amende forfaitaire), + retrait de 3 points",
+    explication:"Le non-port de la ceinture (art. R412-1 du Code de la route) est une contravention de 4ᵉ classe, même en l'absence d'accident." },
+
+  { texte:"Dans un supermarché, une personne dissimule un téléphone portable dans son sac et sort sans payer.",
+    cat:"delit", juridiction:"Tribunal correctionnel", peine:"Jusqu'à 3 ans d'emprisonnement et 45 000 € d'amende",
+    explication:"Le vol simple est un délit, jugé par le tribunal correctionnel — la peine combine prison et amende." },
+  { texte:"Un conducteur prend le volant avec un taux d'alcool largement supérieur à la limite légale autorisée.",
+    cat:"delit", juridiction:"Tribunal correctionnel", peine:"Jusqu'à 2 ans d'emprisonnement et 4 500 € d'amende",
+    explication:"La conduite en état d'ivresse au-delà de 0,8 g/L est un délit, même sans accident." },
+  { texte:"Une personne fait croire à un particulier qu'elle lui propose un investissement rentable pour lui soutirer plusieurs milliers d'euros.",
+    cat:"delit", juridiction:"Tribunal correctionnel", peine:"Jusqu'à 5 ans d'emprisonnement et 375 000 € d'amende",
+    explication:"L'escroquerie est un délit, souvent lourdement sanctionné compte tenu du préjudice financier causé." },
+  { texte:"Lors d'une bagarre, une personne en frappe une autre, qui doit interrompre son travail pendant 5 jours pour se soigner.",
+    cat:"delit", juridiction:"Tribunal correctionnel", peine:"Jusqu'à 3 ans d'emprisonnement et 45 000 € d'amende",
+    explication:"Des violences entraînant une incapacité de travail de 8 jours ou moins restent un délit (au-delà, la peine encourue augmente encore)." },
+  { texte:"Un automobiliste roule alors que son véhicule n'est couvert par aucune assurance.",
+    cat:"delit", juridiction:"Tribunal correctionnel", peine:"Jusqu'à 3 750 € d'amende",
+    explication:"Le défaut d'assurance est un délit routier (art. L324-2 du Code de la route) — l'emprisonnement n'est pas prévu à titre de peine principale, contrairement à d'autres délits." },
+  { texte:"Une personne crée un faux profil sur les réseaux sociaux au nom d'un camarade, pour se faire passer pour lui et nuire à sa réputation.",
+    cat:"delit", juridiction:"Tribunal correctionnel", peine:"Jusqu'à 1 an d'emprisonnement et 15 000 € d'amende",
+    explication:"L'usurpation d'identité (art. 226-4-1 du Code pénal) est punie des mêmes peines qu'elle soit commise dans la vie réelle ou en ligne." },
+  { texte:"Une personne ne cambriole pas elle-même l'appartement, mais fait le guet dehors en sachant précisément ce que son ami est en train de faire à l'intérieur.",
+    cat:"delit", juridiction:"Tribunal correctionnel", peine:"Jusqu'à 3 ans d'emprisonnement et 45 000 € d'amende",
+    explication:"C'est un complice de vol. D'après l'article 121-6 du Code pénal, le complice « est puni comme auteur » : il encourt exactement la même peine que la personne qui est entrée dans l'appartement, même s'il n'a rien volé lui-même." },
+
+  { texte:"Une personne, dans un moment de colère, tue volontairement une autre personne, sans avoir prémédité son geste.",
+    cat:"crime", juridiction:"Cour d'assises", peine:"30 ans de réclusion criminelle",
+    explication:"Le meurtre est un crime : il est jugé par la cour d'assises, seule juridiction pouvant prononcer la réclusion criminelle." },
+  { texte:"Par violence, une personne impose un acte de pénétration sexuelle à une autre personne.",
+    cat:"crime", juridiction:"Cour d'assises", peine:"15 ans de réclusion criminelle",
+    explication:"Le viol est un crime, quelle que soit la relation entre les personnes impliquées." },
+  { texte:"Des individus font irruption dans une bijouterie et menacent les employés avec une arme à feu pour repartir avec la caisse.",
+    cat:"crime", juridiction:"Cour d'assises", peine:"20 ans de réclusion criminelle",
+    explication:"Le vol devient un crime dès lors qu'il est commis avec une arme : c'est une circonstance aggravante qui change sa qualification." },
+  { texte:"Une personne retient une autre contre son gré pendant plusieurs jours, sans possibilité pour elle de partir.",
+    cat:"crime", juridiction:"Cour d'assises", peine:"20 ans de réclusion criminelle",
+    explication:"La séquestration prolongée est un crime, jugé par la cour d'assises." },
+  { texte:"Une personne prépare soigneusement son geste pendant plusieurs jours, puis tue la victime qu'elle visait depuis le début.",
+    cat:"crime", juridiction:"Cour d'assises", peine:"Réclusion criminelle à perpétuité",
+    explication:"C'est un assassinat : un meurtre commis avec préméditation (art. 221-3 du Code pénal). Cette seule circonstance suffit à porter la peine de 30 ans à la perpétuité, sans même qu'une autre circonstance aggravante soit nécessaire." },
+  { texte:"Des individus braquent une supérette avec un pistolet factice, incapable de tirer, pour faire croire au personnel qu'ils sont armés.",
+    cat:"crime", juridiction:"Cour d'assises", peine:"20 ans de réclusion criminelle",
+    explication:"Même une arme factice suffit à caractériser la circonstance aggravante de vol avec arme (art. 311-8 du Code pénal) : la loi retient la menace ressentie par la victime, peu importe que l'arme puisse réellement tirer. La peine encourue est identique à celle d'un vol avec une arme réelle." },
+  { texte:"Une personne ne porte pas elle-même le coup fatal, mais fournit sciemment l'arme et aide à organiser le guet-apens qui permet à son complice de tuer la victime.",
+    cat:"crime", juridiction:"Cour d'assises", peine:"30 ans de réclusion criminelle",
+    explication:"C'est un complice de meurtre. Comme pour tous les délits et crimes, l'article 121-6 du Code pénal prévoit que le complice « est puni comme auteur » : il encourt exactement la même peine que la personne qui a porté le coup, même s'il n'a tué personne de ses propres mains." },
+];
+
+// mélange aléatoire (Fisher-Yates) : l'ordre change à chaque partie, la catégorie n'est plus devinable par la position
+for (let i = AFFAIRES.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [AFFAIRES[i], AFFAIRES[j]] = [AFFAIRES[j], AFFAIRES[i]];
+}
+
+const CAT_INFO = {
+  contravention:{ nom:"UNE CONTRAVENTION", color:"var(--contra)", colorDark:"var(--contra-dark)", soft:"var(--contra-soft)" },
+  delit:{ nom:"UN DÉLIT", color:"var(--delit)", colorDark:"var(--delit-dark)", soft:"var(--delit-soft)" },
+  crime:{ nom:"UN CRIME", color:"var(--crime)", colorDark:"var(--crime-dark)", soft:"var(--crime-soft)" },
+};
+
+let idx = 0, score = 0, dejaRepondu = false;
+
+document.getElementById('btnCommencer').addEventListener('click', () => {
+  document.getElementById('accueil').style.display = 'none';
+  document.getElementById('jeuEcran').style.display = 'block';
+  afficherAffaire();
+});
+document.getElementById('btnQuitter').addEventListener('click', () => location.reload());
+
+function afficherAffaire(){
+  dejaRepondu = false;
+  const aff = AFFAIRES[idx];
+  document.getElementById('numCas').textContent = `Affaire n°${idx+1}`;
+  document.getElementById('compteur').textContent = `${idx+1} / ${AFFAIRES.length}`;
+  document.getElementById('jaugeRemplie').style.width = ((idx+1)/AFFAIRES.length*100) + '%';
+  document.getElementById('casTexte').textContent = aff.texte;
+  document.getElementById('verdictZone').style.display = 'none';
+  document.getElementById('btnSuivant').style.display = 'none';
+  document.querySelectorAll('.opt-btn').forEach(b => {
+    b.disabled = false;
+    b.classList.remove('correct-choice','faux-choice');
+  });
+}
+
+document.querySelectorAll('.opt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (dejaRepondu) return;
+    dejaRepondu = true;
+    const choix = btn.dataset.cat;
+    const aff = AFFAIRES[idx];
+    const bonne = aff.cat;
+    document.querySelectorAll('.opt-btn').forEach(b => {
+      b.disabled = true;
+      if (b.dataset.cat === bonne) b.classList.add('correct-choice');
+      else if (b === btn) b.classList.add('faux-choice');
+    });
+    if (choix === bonne) score++;
+
+    const info = CAT_INFO[bonne];
+    const carte = document.getElementById('verdictCarte');
+    carte.style.setProperty('--cat-color', info.color);
+    carte.style.setProperty('--cat-soft', info.soft);
+    document.getElementById('tampon').textContent = "✓ " + info.nom;
+    document.getElementById('verdictJuridiction').textContent = aff.juridiction;
+    document.getElementById('verdictPeine').textContent = aff.peine;
+    document.getElementById('verdictExplication').textContent = aff.explication;
+    document.getElementById('verdictZone').style.display = 'block';
+    document.getElementById('btnSuivant').style.display = 'inline-block';
+  });
+});
+
+document.getElementById('btnSuivant').addEventListener('click', () => {
+  idx++;
+  if (idx >= AFFAIRES.length) {
+    document.getElementById('jeuEcran').style.display = 'none';
+    document.getElementById('finalEcran').style.display = 'block';
+    document.getElementById('scoreFinal').textContent = `${score} / ${AFFAIRES.length}`;
+    window.scrollTo(0, 0);
+  } else {
+    afficherAffaire();
+  }
+});
+</script>
+</body>
+</html>
